@@ -1,0 +1,12 @@
+#ifndef QTGLTF_GLOBAL_H
+#define QTGLTF_GLOBAL_H
+
+#include <QtCore/qglobal.h>
+
+#if defined(QTGLTF_LIBRARY)
+#  define QTGLTFSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define QTGLTFSHARED_EXPORT Q_DECL_IMPORT
+#endif
+
+#endif // QTGLTF_GLOBAL_H
