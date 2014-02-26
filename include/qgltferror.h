@@ -24,8 +24,10 @@
 #ifndef QGLTFERROR_H
 #define QGLTFERROR_H
 
+// Include QtglTF header files.
 #include "qtgltf_global.h"
 
+// Include Qt header files.
 #include <QString>
 
 class QTGLTFSHARED_EXPORT QglTFError
