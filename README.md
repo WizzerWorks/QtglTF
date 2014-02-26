@@ -6,7 +6,7 @@ for runtime engines based on WebGL, OpenGL, and OpenGL ES APIs. The glTF Specifi
 work-in-progress from the COLLADA Working Group (part of the Khronos Group). See
 http://www.khronos.org for more information.
 
-QtglTF is a Qt 5.0.1 library for creating and maintaining 3D content based on the glTF
+QtglTF is a Qt 5.2.1 library for creating and maintaining 3D content based on the glTF
 Specification.
 
 Features
