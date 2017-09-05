@@ -22,7 +22,9 @@
 // COPYRIGHT_END
 
 // Include system header files.
+#ifdef Q_OS_WIN
 #include <io.h>
+#endif /* Q_OS_WIN */
 
 // Include Qt header files.
 #include <QDebug>
