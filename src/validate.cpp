@@ -124,7 +124,7 @@ static char *findFile(const char *filename)
     return fullpath;
 }
 
-static bool runGltfValidator(const char *gltfFile)
+bool runGltfValidator(const char *gltfFile)
 {
     int status = -1;
 

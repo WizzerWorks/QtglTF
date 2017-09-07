@@ -14,13 +14,16 @@ SOURCES += \
     src/qgltfreader.cpp \
     src/qgltferror.cpp \
     src/qgltfwidget.cpp \
-    src/validate.cpp
+    src/validate.cpp \
+    src/qgltfvalidator.cpp
 
 HEADERS +=\
     include/qtgltf_global.h \
     include/qgltfreader.h \
     include/qgltferror.h \
-    include/qgltfwidget.h
+    include/qgltfwidget.h \
+    include/qgltfvalidator.h \
+    include/validate.h
 
 
 unix:!symbian {
