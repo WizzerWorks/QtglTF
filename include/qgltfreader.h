@@ -53,6 +53,9 @@ class QTGLTFSHARED_EXPORT QglTFReader : public QObject
 
     static void dumpJsonObject(QJsonObject data, int indent = 0);
     static void dumpJsonArray(QJsonArray data, int indent = 0);
+
+    QFile *getFile(void)
+    { return m_file;}
     
   signals:
     

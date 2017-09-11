@@ -37,7 +37,7 @@ QglTFValidator::~QglTFValidator()
     // Do nothing.
 }
 
-bool validate(const char *gltfFile)
+bool QglTFValidator::validate(const char *gltfFile)
 {
     return runGltfValidator(gltfFile);
 }
