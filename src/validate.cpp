@@ -31,13 +31,13 @@
 #include <string.h>
 
 // Todo: modify to capture stdout/stderr.
-static int execProgram(const char **argv)
+static int execProgram(const char **argv, char **env)
 {
     pid_t pid;
     int   status, timeout /* unused ifdef WAIT_FOR_COMPLETION */;
 
     if (0 == (pid = fork())) {
-        if (-1 == execve(argv[0], (char **)argv , NULL)) {
+        if (-1 == execve(argv[0], (char **)argv , env)) {
             perror("child process execve failed [%m]");
             return -1;
         }
@@ -90,6 +90,10 @@ static char *findFile(const char *filename)
 {
     char *fullpath = NULL;
 
+    // Todo: modify to handle '~'.
+    // Todo: modify to handle absolute path.
+    // Todo: modify for relative path.
+
     // Retrieve the PATH environment variable.
     char *dup = strdup(getenv("PATH"));
 
@@ -124,6 +128,30 @@ static char *findFile(const char *filename)
     return fullpath;
 }
 
+static char **buildEnvironment()
+{
+    // Retrieve the PATH environment variable.
+    char *oldPATH = strdup(getenv("PATH"));
+    const char *dartbin = "/usr/lib/dart/bin";
+
+    // Construct new PATH environment variable.
+    char *newPATH = new char[strlen(oldPATH) + strlen(dartbin) + 2];
+    memcpy(newPATH, dartbin, strlen(dartbin));
+    memcpy(newPATH+strlen(dartbin), ":", 1);
+    memcpy(newPATH+strlen(dartbin)+1, oldPATH, strlen(oldPATH));
+    memcpy(newPATH+strlen(dartbin)+strlen(oldPATH)+1, "\0", 1);
+
+    // Replace old PATH with new one.
+    setenv("PATH", newPATH, 1);
+
+    // Free up memory.
+    free(oldPATH);
+    delete newPATH;
+
+    // The global environ variable should now contain the modified PATH.
+    return environ;
+}
+
 bool runGltfValidator(const char *gltfFile)
 {
     int status = -1;
@@ -131,11 +159,17 @@ bool runGltfValidator(const char *gltfFile)
     char *executable = findFile("gltf_validator");
     if (executable != NULL)
     {
+        // Build up the executable string.
         const char *argv[3];
         argv[0] = executable;
         argv[1] = gltfFile;
         argv[2] = NULL;
-        status = execProgram(argv);
+
+        // Build up the environment.
+        char **env = buildEnvironment();
+
+        // Run the program.
+        status = execProgram(argv, env);
 
         // Error reporting is generated as a JSON file.
 
