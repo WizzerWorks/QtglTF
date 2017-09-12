@@ -107,7 +107,7 @@ static char *findFile(const char *filename)
         printf("Path in $PATH: %s\n", s);
         // Search directory for path entry, s, and determine if filename is in the path.
         // If found, return the full path to the filename, "s/filename".
-        char *fullpath = fileExists(s, filename);
+        fullpath = fileExists(s, filename);
         if (fullpath != NULL) {
             // Found file in parsed PATH entry.
             break;
@@ -131,9 +131,10 @@ bool runGltfValidator(const char *gltfFile)
     char *executable = findFile("gltf_validator");
     if (executable != NULL)
     {
-        const char *argv[2];
+        const char *argv[3];
         argv[0] = executable;
         argv[1] = gltfFile;
+        argv[2] = NULL;
         status = execProgram(argv);
 
         // Error reporting is generated as a JSON file.
