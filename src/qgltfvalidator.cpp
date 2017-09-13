@@ -25,6 +25,7 @@
 #include "validate.h"
 
 #include <QObject>
+#include <QString>
 
 QglTFValidator::QglTFValidator(QObject *parent) :
     QObject(parent)
@@ -39,5 +40,21 @@ QglTFValidator::~QglTFValidator()
 
 bool QglTFValidator::validate(const char *gltfFile)
 {
-    return runGltfValidator(gltfFile);
+    bool status;
+    void *result;
+
+    // Run the glTF validator.
+    status = runGltfValidator(gltfFile, &result);
+
+    // Process the result.
+    if (status) {
+        QString *report = new QString((char *)result);
+        printf("%s\n", report->toLatin1().constData());
+        fflush(stdout);
+    }
+
+    if (result != NULL)
+        delete result;
+
+    return status;
 }

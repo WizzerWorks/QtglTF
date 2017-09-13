@@ -24,6 +24,6 @@
 #ifndef VALIDATE_H
 #define VALIDATE_H
 
-extern bool runGltfValidator(const char *gltfFile);
+extern bool runGltfValidator(const char *gltfFile, void **returnVal);
 
 #endif // VALIDATE_H

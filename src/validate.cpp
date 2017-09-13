@@ -226,7 +226,7 @@ static char **buildEnvironment()
     return environ;
 }
 
-bool runGltfValidator(const char *gltfFile)
+bool runGltfValidator(const char *gltfFile, void **returnVal)
 {
     int status = -1;
 
@@ -250,8 +250,11 @@ bool runGltfValidator(const char *gltfFile)
         // stdout of executed program (above "*result" paramater).
         if (status == 0) {
             // "*result" may not be NULL terminated.
-            printf("%s", (char *)result);
-            fflush(stdout);
+            //printf("%s", (char *)result);
+            //fflush(stdout);
+            *returnVal = result;
+        } else {
+            *returnVal = NULL;
         }
 
         // Clean up.
