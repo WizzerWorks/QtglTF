@@ -30,15 +30,63 @@
 #include <stdlib.h>
 #include <string.h>
 
-// Todo: modify to capture stdout/stderr.
-static int execProgram(const char **argv, char **env)
+// Since pipes are unidirectional, we need two pipes.
+// One for data to flow from parent's stdout to child's
+// stdin and the other for child's stdout to flow to
+// parent's stdin.
+
+#define NUM_PIPES          2
+
+#define PARENT_WRITE_PIPE  0
+#define PARENT_READ_PIPE   1
+
+static int pipes[NUM_PIPES][2];
+
+// Always in a pipe[], pipe[0] is for read and
+// pipe[1] is for write.
+#define READ_FD  0
+#define WRITE_FD 1
+
+#define PARENT_READ_FD  ( pipes[PARENT_READ_PIPE][READ_FD]   )
+#define PARENT_WRITE_FD ( pipes[PARENT_WRITE_PIPE][WRITE_FD] )
+
+#define CHILD_READ_FD   ( pipes[PARENT_WRITE_PIPE][READ_FD]  )
+#define CHILD_WRITE_FD  ( pipes[PARENT_READ_PIPE][WRITE_FD]  )
+
+// Execute program identified by argv[0]. stdout is captured and returned
+// as a byte buffer pointed to by *returnVal. The calling routine must deallocate
+// this buffer.
+static int execProgram(const char **argv, char **env, void **returnVal)
 {
     pid_t pid;
     int   status, timeout /* unused ifdef WAIT_FOR_COMPLETION */;
 
+    // pipes for parent to write and read.
+    if (pipe(pipes[PARENT_READ_PIPE]) == -1) {
+        perror("execProgram: Unable to open read pipe [%m]");
+        *returnVal = NULL;
+        return -1;
+    }
+    if (pipe(pipes[PARENT_WRITE_PIPE]) == -1) {
+        perror("execProgram: Unable to open write pipt [%m]");
+        *returnVal = NULL;
+        return -1;
+    }
+
     if (0 == (pid = fork())) {
+        dup2(CHILD_READ_FD, STDIN_FILENO);
+        dup2(CHILD_WRITE_FD, STDOUT_FILENO);
+
+        // Close fds not required by child. Also, we don't
+        // want the exec'ed program to know these existed.
+        close(CHILD_READ_FD);
+        close(CHILD_WRITE_FD);
+        close(PARENT_READ_FD);
+        close(PARENT_WRITE_FD);
+
         if (-1 == execve(argv[0], (char **)argv , env)) {
-            perror("child process execve failed [%m]");
+            perror("execProgram: Child process execve failed [%m]");
+            *returnVal = NULL;
             return -1;
         }
     }
@@ -48,21 +96,47 @@ static int execProgram(const char **argv, char **env)
 
     while (0 == waitpid(pid , &status , WNOHANG)) {
         if ( --timeout < 0 ) {
-            perror("timeout");
+            perror("execProgram: timeout occurred waiting for execve to complete [%m]");
+            *returnVal = NULL;
             return -1;
         }
         sleep(1);
     }
 
-    printf("%s WEXITSTATUS %d WIFEXITED %d [status %d]\n",
-            argv[0], WEXITSTATUS(status), WIFEXITED(status), status);
+    //printf("%s WEXITSTATUS %d WIFEXITED %d [status %d]\n",
+    //        argv[0], WEXITSTATUS(status), WIFEXITED(status), status);
+
+    // Close fds not required by parent.
+    close(CHILD_READ_FD);
+    close(CHILD_WRITE_FD);
+
+    // Read from child’s stdout.
+    bool done = false;
+    void *result = NULL;
+    size_t resultLen = 0;
+    while (! done) {
+        char buffer[1024]; // How big should this buffer be to capture stdout?
+        int count;
+
+        count = read(PARENT_READ_FD, buffer, sizeof(buffer));
+        if (count == 0) {
+            done = true;
+        } else {
+            // Process captured stdout here.
+            result = realloc(result, resultLen+count);
+            memcpy(((char *)result)+resultLen, buffer, count);
+            resultLen += count;
+        }
+    }
 
     if (1 != WIFEXITED(status) || 0 != WEXITSTATUS(status)) {
         perror("%s failed, halt system");
+        *returnVal = NULL;
         return -1;
     }
-
 #endif
+
+    *returnVal = result;
     return 0;
 }
 
@@ -169,9 +243,16 @@ bool runGltfValidator(const char *gltfFile)
         char **env = buildEnvironment();
 
         // Run the program.
-        status = execProgram(argv, env);
+        void *result;
+        status = execProgram(argv, env, &result);
 
-        // Error reporting is generated as a JSON file.
+        // Error reporting is generated as a JSON file captured from
+        // stdout of executed program (above "*result" paramater).
+        if (status == 0) {
+            // "*result" may not be NULL terminated.
+            printf("%s", (char *)result);
+            fflush(stdout);
+        }
 
         // Clean up.
         delete executable;
