@@ -1,7 +1,7 @@
 // COPYRIGHT_BEGIN
 // The MIT License (MIT)
 //
-// Copyright (c) 2014 Wizzer Works
+// Copyright (c) 2014-2019 Wizzer Works
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -44,19 +44,25 @@ QString QglTFError::errorString() const
     {
         case NoError:
             str = QObject::tr("No error occurred.");
+            break;
         case InvalidArgument:
             str = QObject::tr("Invalid argument.");
+            break;
         case MemoryAllocation:
             str = QObject::tr("Memory allocation error.");
+             break;
         case OpenFile:
             str = QObject::tr("Unable to open file.");
+            break;
         case ReadFile:
             str = QObject::tr("Unable to read file.");
+            break;
         case WriteFile:
             str = QObject::tr("Unable to write file.");
+            break;
         default:
             str = QObject::tr("Unknown error.");
-    };
+    }
 
     return str;
 }
