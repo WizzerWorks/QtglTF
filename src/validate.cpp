@@ -242,7 +242,7 @@ static char **buildEnvironment()
         // Use default path.
         dartbin = new char[strlen("/usr/lib/dart/bin") + 1];
         memcpy(dartbin, "/usr/lib/dart/bin", strlen("/usr/lib/dart/bin"));
-        memcpy(dartbin+strlen("/usr/lib/dart/bin")+1, "\0", 1);
+        memcpy(dartbin+strlen("/usr/lib/dart/bin"), "\0", 1);
     }
 
     // Construct new PATH environment variable.
