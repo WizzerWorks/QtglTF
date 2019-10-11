@@ -36,7 +36,7 @@ class QTGLTFSHARED_EXPORT QglTFValidator : public QObject
     Q_OBJECT
 
   public:
-    explicit QglTFValidator(QObject *parent = 0);
+    explicit QglTFValidator(QObject *parent = nullptr);
     virtual ~QglTFValidator();
 
   signals:

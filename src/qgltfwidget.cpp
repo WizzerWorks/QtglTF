@@ -185,7 +185,7 @@ void QglTFWidget::loadData(QJsonObject data)
     update();
 }
 
-void QglTFWidget::selectItem(QTreeWidgetItem *item, int column)
+void QglTFWidget::selectItem(QTreeWidgetItem * /*item*/, int /*column*/)
 {
     qDebug() << "Item selected:";
 }

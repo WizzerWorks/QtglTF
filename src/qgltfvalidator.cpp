@@ -44,17 +44,18 @@ bool QglTFValidator::validate(const char *gltfFile)
     void *result;
 
     // Run the glTF validator.
+    result = nullptr;
     status = runGltfValidator(gltfFile, &result);
 
     // Process the result.
     if (status) {
-        QString *report = new QString((char *)result);
+        QString *report = new QString(reinterpret_cast<char *>(result));
         printf("%s\n", report->toLatin1().constData());
         fflush(stdout);
     }
 
-    if (result != NULL)
-        delete result;
+    if (result != nullptr)
+        delete reinterpret_cast<char *>(result);
 
     return status;
 }

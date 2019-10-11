@@ -35,7 +35,7 @@
 QglTFReader::QglTFReader(QObject *parent) :
     QObject(parent)
 {
-    m_file = NULL;
+    m_file = nullptr;
 }
 
 QglTFReader::~QglTFReader()
@@ -47,9 +47,9 @@ QglTFReader::~QglTFReader()
 bool QglTFReader::open(const char *filename, QglTFError *error)
 {
     // Check for valid arguments.
-    if (filename == NULL)
+    if (filename == nullptr)
     {
-        if (error != NULL)
+        if (error != nullptr)
             error->setError(QglTFError::InvalidArgument);
         return false;
     }
@@ -60,9 +60,9 @@ bool QglTFReader::open(const char *filename, QglTFError *error)
 
     // Create the new file object.
     m_file = new QFile(filename);
-    if (m_file == NULL)
+    if (m_file == nullptr)
     {
-        if (error != NULL)
+        if (error != nullptr)
             error->setError(QglTFError::MemoryAllocation);
         return false;
     }
@@ -70,10 +70,10 @@ bool QglTFReader::open(const char *filename, QglTFError *error)
     // Open the file.
     if (! m_file->open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        if (error != NULL)
+        if (error != nullptr)
             error->setError(QglTFError::OpenFile);
         delete m_file;
-        m_file = NULL;
+        m_file = nullptr;
         return false;
     }
 
@@ -82,7 +82,7 @@ bool QglTFReader::open(const char *filename, QglTFError *error)
     if (data.isEmpty())
     {
         // No data available in the document.
-        if (error != NULL)
+        if (error != nullptr)
             error->setError(QglTFError::ReadFile);
         close();
         return false;
@@ -93,7 +93,7 @@ bool QglTFReader::open(const char *filename, QglTFError *error)
     if (m_document.isNull())
     {
         // Data is invalid.
-        if (error != NULL)
+        if (error != nullptr)
             error->setError(QglTFError::ReadFile);
         close();
         return false;
@@ -106,11 +106,11 @@ bool QglTFReader::open(const char *filename, QglTFError *error)
 
 bool QglTFReader::close()
 {
-    if (m_file != NULL)
+    if (m_file != nullptr)
     {
         m_file->close();
         delete m_file;
-        m_file = NULL;
+        m_file = nullptr;
     }
 
     return true;
@@ -118,7 +118,7 @@ bool QglTFReader::close()
 
 bool QglTFReader::isOpen()
 {
-    if (m_file != NULL) return true;
+    if (m_file != nullptr) return true;
     else return false;
 }
 
@@ -133,7 +133,7 @@ QJsonObject QglTFReader::getData()
 
 QString *QglTFReader::toString()
 {
-    QString *retValue = NULL;
+    QString *retValue = nullptr;
 
     if (isOpen() && (! m_document.isNull()))
     {

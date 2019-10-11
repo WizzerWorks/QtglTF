@@ -40,10 +40,10 @@ class QTGLTFSHARED_EXPORT QglTFReader : public QObject
     Q_OBJECT
 
   public:
-    explicit QglTFReader(QObject *parent = 0);
+    explicit QglTFReader(QObject *parent = nullptr);
     virtual ~QglTFReader();
 
-    bool open(const char *filename, QglTFError *error = NULL);
+    bool open(const char *filename, QglTFError *error = nullptr);
     bool close();
     bool isOpen();
 

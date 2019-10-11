@@ -41,7 +41,7 @@ class QTGLTFSHARED_EXPORT QglTFWidget : public QTreeWidget
     Q_OBJECT
 
   public:
-    explicit QglTFWidget(QWidget *parent = 0);
+    explicit QglTFWidget(QWidget *parent = nullptr);
     virtual ~QglTFWidget();
 
   signals:

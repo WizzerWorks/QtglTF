@@ -64,12 +64,12 @@ static int execProgram(const char **argv, char **env, void **returnVal)
     // pipes for parent to write and read.
     if (pipe(pipes[PARENT_READ_PIPE]) == -1) {
         perror("execProgram: Unable to open read pipe [%m]");
-        *returnVal = NULL;
+        *returnVal = nullptr;
         return -1;
     }
     if (pipe(pipes[PARENT_WRITE_PIPE]) == -1) {
-        perror("execProgram: Unable to open write pipt [%m]");
-        *returnVal = NULL;
+        perror("execProgram: Unable to open write pipe [%m]");
+        *returnVal = nullptr;
         return -1;
     }
 
@@ -84,9 +84,9 @@ static int execProgram(const char **argv, char **env, void **returnVal)
         close(PARENT_READ_FD);
         close(PARENT_WRITE_FD);
 
-        if (-1 == execve(argv[0], (char **)argv , env)) {
+        if (-1 == execve(argv[0], const_cast<char **>(argv) , env)) {
             perror("execProgram: Child process execve failed [%m]");
-            *returnVal = NULL;
+            *returnVal = nullptr;
             return -1;
         }
     }
@@ -97,7 +97,7 @@ static int execProgram(const char **argv, char **env, void **returnVal)
     while (0 == waitpid(pid , &status , WNOHANG)) {
         if ( --timeout < 0 ) {
             perror("execProgram: timeout occurred waiting for execve to complete [%m]");
-            *returnVal = NULL;
+            *returnVal = nullptr;
             return -1;
         }
         sleep(1);
@@ -112,26 +112,28 @@ static int execProgram(const char **argv, char **env, void **returnVal)
 
     // Read from child’s stdout.
     bool done = false;
-    void *result = NULL;
-    size_t resultLen = 0;
+    void *result = nullptr;
+    ssize_t resultLen = 0;
     while (! done) {
         char buffer[1024]; // How big should this buffer be to capture stdout?
-        int count;
+        ssize_t count;
 
         count = read(PARENT_READ_FD, buffer, sizeof(buffer));
         if (count == 0) {
             done = true;
+        } else if (count == -1) {
+            // And error occurred.
         } else {
             // Process captured stdout here.
-            result = realloc(result, resultLen+count);
-            memcpy(((char *)result)+resultLen, buffer, count);
+            result = realloc(result, static_cast<size_t>(resultLen+count));
+            memcpy(reinterpret_cast<char *>(result)+resultLen, buffer, static_cast<size_t>(count));
             resultLen += count;
         }
     }
 
     if (1 != WIFEXITED(status) || 0 != WEXITSTATUS(status)) {
         perror("%s failed, halt system");
-        *returnVal = NULL;
+        *returnVal = nullptr;
         return -1;
     }
 #endif
@@ -156,13 +158,13 @@ static char *fileExists(const char *dir, const char *file)
         return dest;
     }
 
-    delete dest;
-    return NULL;
+    delete[] dest;
+    return nullptr;
 }
 
 static char *findFile(const char *filename)
 {
-    char *fullpath = NULL;
+    char *fullpath = nullptr;
 
     // Todo: modify to handle '~'.
     // Todo: modify to handle absolute path.
@@ -173,11 +175,11 @@ static char *findFile(const char *filename)
 
     // Initialize parsing.
     char *s = dup;
-    char *p = NULL;
+    char *p = nullptr;
     do {
         // Parse for next entry.
         p = strchr(s, ':');
-        if (p != NULL) {
+        if (p != nullptr) {
             p[0] = 0;
         }
 
@@ -186,14 +188,14 @@ static char *findFile(const char *filename)
         // Search directory for path entry, s, and determine if filename is in the path.
         // If found, return the full path to the filename, "s/filename".
         fullpath = fileExists(s, filename);
-        if (fullpath != NULL) {
+        if (fullpath != nullptr) {
             // Found file in parsed PATH entry.
             break;
         }
 
         // Increment past ':' to parse next entry.
         s = p + 1;
-    } while (p != NULL);
+    } while (p != nullptr);
 
     // Free up memory.
     free(dup);
@@ -202,11 +204,46 @@ static char *findFile(const char *filename)
     return fullpath;
 }
 
+static char *findGltfValidator(const char *envvar)
+{
+    // Retrieve the gltf_validator from the environment variable.
+    const char *value = getenv(envvar);
+    if (value == nullptr)
+        return nullptr;
+
+    char *validator = strdup(value);
+    if (validator != nullptr) {
+        // stat validator to see if it exists.
+        struct stat buf;
+        if (stat(validator, &buf) == 0) {
+            // File exists, returns allocated space containing full path.
+            return validator;
+        }
+    }
+
+    delete[] validator;
+    return nullptr;
+}
+
 static char **buildEnvironment()
 {
     // Retrieve the PATH environment variable.
     char *oldPATH = strdup(getenv("PATH"));
-    const char *dartbin = "/usr/lib/dart/bin";
+    char *dartbin = nullptr;
+
+    // Retrieve the dart path from the environment variable, DART_HOME.
+    const char *value = getenv("DART_HOME");
+    if (value != nullptr) {
+        dartbin = new char[strlen(value) + 5];
+        memcpy(dartbin, value, strlen(value));
+        memcpy(dartbin+strlen(value), "/bin", 4);
+        memcpy(dartbin+strlen(value)+4, "\0", 1);
+    } else {
+        // Use default path.
+        dartbin = new char[strlen("/usr/lib/dart/bin") + 1];
+        memcpy(dartbin, "/usr/lib/dart/bin", strlen("/usr/lib/dart/bin"));
+        memcpy(dartbin+strlen("/usr/lib/dart/bin")+1, "\0", 1);
+    }
 
     // Construct new PATH environment variable.
     char *newPATH = new char[strlen(oldPATH) + strlen(dartbin) + 2];
@@ -219,8 +256,9 @@ static char **buildEnvironment()
     setenv("PATH", newPATH, 1);
 
     // Free up memory.
+    free(dartbin);
     free(oldPATH);
-    delete newPATH;
+    delete[] newPATH;
 
     // The global environ variable should now contain the modified PATH.
     return environ;
@@ -230,14 +268,17 @@ bool runGltfValidator(const char *gltfFile, void **returnVal)
 {
     int status = -1;
 
-    char *executable = findFile("gltf_validator");
-    if (executable != NULL)
+    char *executable = findGltfValidator("GLTF_VALIDATOR");
+    if (executable == nullptr)
+        // Search using PATH
+        executable = findFile("gltf_validator");
+    if (executable != nullptr)
     {
         // Build up the executable string.
         const char *argv[3];
         argv[0] = executable;
         argv[1] = gltfFile;
-        argv[2] = NULL;
+        argv[2] = nullptr;
 
         // Build up the environment.
         char **env = buildEnvironment();
@@ -254,7 +295,7 @@ bool runGltfValidator(const char *gltfFile, void **returnVal)
             //fflush(stdout);
             *returnVal = result;
         } else {
-            *returnVal = NULL;
+            *returnVal = nullptr;
         }
 
         // Clean up.
